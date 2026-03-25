@@ -35,10 +35,10 @@ export default async function Page() {
     <main className="noise-overlay min-h-screen">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
         <section className="panel-shadow overflow-hidden border border-border bg-card">
-          <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="flex flex-col justify-between gap-8 border-b border-border p-6 sm:p-8 lg:border-r lg:border-b-0 lg:p-10">
+          <div className="grid gap-0 lg:grid-cols-[1.3fr_0.7fr]">
+            <div className="flex flex-col justify-between gap-6 border-b border-border p-5 sm:p-6 lg:border-r lg:border-b-0 lg:p-8">
               <div className="flex flex-wrap items-center gap-4">
-                <div className="hero-glow panel-shadow flex items-center gap-3 border border-foreground px-4 py-3">
+                <div className="hero-glow panel-shadow flex items-center gap-4 border border-foreground px-5 py-4">
                   <Image
                     src="/logo.png"
                     alt="Compete on Strava logo"
@@ -49,10 +49,10 @@ export default async function Page() {
                   />
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.35em] text-primary-foreground/80">
-                      Robinsonites
-                    </p>
-                    <h1 className="text-lg font-semibold text-primary-foreground sm:text-2xl">
                       Compete on Strava
+                    </p>
+                    <h1 className="mt-1 text-2xl font-semibold leading-none text-primary-foreground sm:text-4xl">
+                      Robinsonites
                     </h1>
                   </div>
                 </div>
@@ -61,35 +61,31 @@ export default async function Page() {
                 </div>
               </div>
 
-              <div className="max-w-3xl space-y-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-                  If it&apos;s not on Strava, it didn&apos;t happen
-                </p>
-                <h2 className="max-w-3xl text-4xl font-semibold leading-none text-foreground sm:text-6xl">
-                  Run loud. Climb the board. Leave excuses at the start line.
+              <div className="max-w-2xl space-y-3">
+                <h2 className="max-w-2xl text-3xl font-semibold leading-none text-foreground sm:text-5xl">
+                  If it&apos;s not on Strava, it did not HAPPEN
                 </h2>
-                <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                  A private leaderboard for the Robinsonites crew tracking every
-                  logged kilometer from{" "}
+                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  A highly competitive leaderboard for the Robinsonites crew to prove 
+                  who is actually running, from{" "}
                   <span className="font-medium text-foreground">
                     {CHALLENGE_START.toLocaleDateString("en-US", {
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                     })}
                   </span>{" "}
                   to{" "}
                   <span className="font-medium text-foreground">
                     {CHALLENGE_END.toLocaleDateString("en-US", {
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
                   </span>
                   .
                 </p>
-                <p className="text-sm leading-7 text-muted-foreground">
-                  Russel, Joel, Joab, and Joe Israel are the four active runners
-                  on the board right now.
+                <p className="text-sm text-muted-foreground">
+                  Currently featuring the athletic (and perhaps not-so-athletic) attempts of Russel, Joel, Joab, and Joe Israel.
                 </p>
               </div>
             </div>
@@ -230,12 +226,12 @@ function MetricTile({
   value: string
 }) {
   return (
-    <div className="bg-card p-5 sm:p-6">
-      <div className="mb-10 flex items-center justify-between text-muted-foreground">
+    <div className="bg-card p-4 sm:p-5">
+      <div className="mb-6 flex items-center justify-between text-muted-foreground">
         <span className="text-xs uppercase tracking-[0.25em]">{label}</span>
         {icon}
       </div>
-      <p className="text-2xl font-semibold text-foreground sm:text-3xl">{value}</p>
+      <p className="text-xl font-semibold text-foreground sm:text-2xl">{value}</p>
     </div>
   )
 }
