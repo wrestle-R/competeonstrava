@@ -1,21 +1,33 @@
-# Next.js template
+# Compete on Strava
 
-This is a Next.js template with shadcn/ui.
+Next.js app for the Robinsonites Strava challenge.
 
-## Adding components
+## Environment
 
-To add components to your app, run the following command:
+Use `.env` or `.env.local` with:
 
 ```bash
-npx shadcn@latest add button
+DATABASE_URL=...
+POSTGRES_URL=...
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+RUSSEL_CLIENT_ID=...
+RUSSEL_CLIENT_SECRET=...
+CHRISO_CLIENT_ID=...
+CHRISO_CLIENT_SECRET=...
 ```
 
-This will place the ui components in the `components` directory.
+## Database
 
-## Using components
+This app uses direct Postgres via `pg`, not Prisma.
 
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
+```bash
+npm install
+npm run db:migrate
 ```
+
+## Routes
+
+- `/` leaderboard from Postgres
+- `/auth` Strava connect/reconnect page
+- `/refresh` manual sync page

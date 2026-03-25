@@ -30,6 +30,9 @@ pnpm-debug.log*
 
 # env files
 .env*.local
+.env
+
+migrations
 
 # typescript
 *.tsbuildinfo

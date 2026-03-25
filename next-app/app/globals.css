@@ -48,38 +48,40 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0.008 326);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0.008 326);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0.008 326);
-    --primary: oklch(0.511 0.096 186.391);
-    --primary-foreground: oklch(0.984 0.014 180.72);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.96 0.003 325.6);
-    --muted-foreground: oklch(0.542 0.034 322.5);
-    --accent: oklch(0.96 0.003 325.6);
-    --accent-foreground: oklch(0.212 0.019 322.12);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0.005 325.62);
-    --input: oklch(0.922 0.005 325.62);
-    --ring: oklch(0.711 0.019 323.02);
-    --chart-1: oklch(0.808 0.114 19.571);
-    --chart-2: oklch(0.637 0.237 25.331);
-    --chart-3: oklch(0.577 0.245 27.325);
-    --chart-4: oklch(0.505 0.213 27.518);
-    --chart-5: oklch(0.444 0.177 26.899);
+    --font-sans: "Avenir Next", "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", "Menlo", monospace;
+    --background: oklch(0.98 0.015 85);
+    --foreground: oklch(0.24 0.05 30);
+    --card: oklch(0.99 0.01 80);
+    --card-foreground: oklch(0.24 0.05 30);
+    --popover: oklch(0.99 0.01 80);
+    --popover-foreground: oklch(0.24 0.05 30);
+    --primary: oklch(0.68 0.21 38);
+    --primary-foreground: oklch(0.98 0.015 85);
+    --secondary: oklch(0.92 0.05 70);
+    --secondary-foreground: oklch(0.3 0.06 35);
+    --muted: oklch(0.94 0.03 75);
+    --muted-foreground: oklch(0.46 0.07 36);
+    --accent: oklch(0.82 0.14 118);
+    --accent-foreground: oklch(0.22 0.04 120);
+    --destructive: oklch(0.62 0.23 27);
+    --border: oklch(0.86 0.04 70);
+    --input: oklch(0.9 0.03 72);
+    --ring: oklch(0.7 0.19 40);
+    --chart-1: oklch(0.68 0.21 38);
+    --chart-2: oklch(0.74 0.17 118);
+    --chart-3: oklch(0.6 0.15 210);
+    --chart-4: oklch(0.78 0.12 70);
+    --chart-5: oklch(0.58 0.17 18);
     --radius: 0;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0.008 326);
-    --sidebar-primary: oklch(0.6 0.118 184.704);
-    --sidebar-primary-foreground: oklch(0.984 0.014 180.72);
-    --sidebar-accent: oklch(0.96 0.003 325.6);
-    --sidebar-accent-foreground: oklch(0.212 0.019 322.12);
-    --sidebar-border: oklch(0.922 0.005 325.62);
-    --sidebar-ring: oklch(0.711 0.019 323.02);
+    --sidebar: oklch(0.985 0.01 80);
+    --sidebar-foreground: oklch(0.24 0.05 30);
+    --sidebar-primary: oklch(0.68 0.21 38);
+    --sidebar-primary-foreground: oklch(0.98 0.015 85);
+    --sidebar-accent: oklch(0.92 0.05 70);
+    --sidebar-accent-foreground: oklch(0.3 0.06 35);
+    --sidebar-border: oklch(0.86 0.04 70);
+    --sidebar-ring: oklch(0.7 0.19 40);
 }
 
 .dark {
@@ -122,8 +124,43 @@
     }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at top left, color-mix(in oklab, var(--primary) 22%, transparent), transparent 28%),
+      radial-gradient(circle at top right, color-mix(in oklab, var(--accent) 24%, transparent), transparent 24%),
+      linear-gradient(180deg, color-mix(in oklab, var(--background) 90%, white) 0%, var(--background) 100%);
+    min-height: 100vh;
     }
   html {
     @apply font-mono;
     }
+}
+
+@layer utilities {
+  .noise-overlay {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .noise-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+    background-size: 18px 18px;
+    mix-blend-mode: multiply;
+    z-index: -1;
+  }
+
+  .panel-shadow {
+    box-shadow: 10px 10px 0 0 color-mix(in oklab, var(--foreground) 18%, transparent);
+  }
+
+  .hero-glow {
+    background:
+      linear-gradient(135deg, color-mix(in oklab, var(--primary) 80%, white) 0%, color-mix(in oklab, var(--accent) 70%, white) 100%);
+  }
 }
