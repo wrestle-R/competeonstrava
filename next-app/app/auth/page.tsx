@@ -152,7 +152,7 @@ export default async function AuthPage({
                   </p>
                 ) : (
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <Link
+                    <a
                       href={`/api/strava/start?user=${participant.slug}`}
                       className={cn(
                         buttonVariants({ size: "lg" }),
@@ -160,7 +160,7 @@ export default async function AuthPage({
                       )}
                     >
                       {connected ? "Reconnect Strava" : "Connect Strava"}
-                    </Link>
+                    </a>
                     <Link
                       href="/"
                       className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
