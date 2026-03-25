@@ -58,7 +58,8 @@ export default async function AuthPage({
 
           <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground">
             Connect each runner once, then the home page can read cached totals
-            from Postgres. For now this flow is set up for Russel and Chriso only.
+            from Postgres. This hidden desk is configured for the four active
+            Robinsonites runners: Russel, Joel, Joab, and Joe Israel.
           </p>
 
           {status ? (

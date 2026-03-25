@@ -1,9 +1,9 @@
 import { dbQuery } from "@/lib/db"
 
 export type SupportedParticipant = {
-  slug: "russel" | "chriso"
+  slug: "russel" | "joel" | "joab" | "joe-israel"
   name: string
-  envPrefix: "RUSSEL" | "CHRISO"
+  envPrefix: "RUSSEL" | "JOEL" | "JOAB" | "JOELISRAEL"
 }
 
 export type ParticipantRecord = {
@@ -42,7 +42,9 @@ type ParticipantRow = {
 
 export const SUPPORTED_PARTICIPANTS: SupportedParticipant[] = [
   { slug: "russel", name: "Russel Daniel Paul", envPrefix: "RUSSEL" },
-  { slug: "chriso", name: "Chriso Christudhas", envPrefix: "CHRISO" },
+  { slug: "joel", name: "Joel", envPrefix: "JOEL" },
+  { slug: "joab", name: "Joab", envPrefix: "JOAB" },
+  { slug: "joe-israel", name: "Joe Israel", envPrefix: "JOELISRAEL" },
 ]
 
 export function getParticipantDefinition(slug: string) {

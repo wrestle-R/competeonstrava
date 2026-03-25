@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 
 import Image from "next/image"
-import Link from "next/link"
 import { unstable_noStore as noStore } from "next/cache"
 import { Footprints, Flame, TimerReset, Trophy } from "lucide-react"
 
@@ -88,24 +87,10 @@ export default async function Page() {
                   </span>
                   .
                 </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/auth"
-                  className={cn(buttonVariants({ size: "lg" }), "panel-shadow border border-foreground")}
-                >
-                  Connect runners
-                </Link>
-                <Link
-                  href="/refresh"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "panel-shadow border-foreground bg-background"
-                  )}
-                >
-                  Refresh distances
-                </Link>
+                <p className="text-sm leading-7 text-muted-foreground">
+                  Russel, Joel, Joab, and Joe Israel are the four active runners
+                  on the board right now.
+                </p>
               </div>
             </div>
 
@@ -138,7 +123,7 @@ export default async function Page() {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_22rem]">
+        <section className="mt-6">
           <div className="panel-shadow border border-border bg-card p-4 sm:p-6">
             <div className="mb-5 flex items-end justify-between gap-4">
               <div>
@@ -220,50 +205,15 @@ export default async function Page() {
                   No runners connected yet
                 </p>
                 <h4 className="mt-3 text-3xl font-semibold">
-                  Go login and bring the board to life.
+                  The board is ready whenever the Robinsonites data lands.
                 </h4>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-primary-foreground/85">
-                  No dummy data here. Connect Russel and Chriso on the auth page,
-                  then hit refresh to pull their runs from Strava into Postgres.
+                  No dummy data here. Once the four Robinsonites runners are connected
+                  and synced, this leaderboard will update from the Postgres cache.
                 </p>
-                <div className="mt-5">
-                  <Link
-                    href="/auth"
-                    className={cn(
-                      buttonVariants({ variant: "secondary", size: "lg" }),
-                      "border border-foreground bg-background text-foreground"
-                    )}
-                  >
-                    Go to /auth
-                  </Link>
-                </div>
               </div>
             )}
           </div>
-
-          <aside className="grid gap-6">
-            <div className="panel-shadow border border-border bg-card p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                Challenge rules
-              </p>
-              <div className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
-                <p>Only Strava runs count.</p>
-                <p>Only distance after the challenge start is included.</p>
-                <p>Home page reads from Postgres only, never directly from Strava.</p>
-              </div>
-            </div>
-
-            <div className="panel-shadow border border-border bg-card p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                V1 scope
-              </p>
-              <div className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
-                <p>Current runners: Russel and Chriso.</p>
-                <p>Three more Robinsonites can be added later without changing the model.</p>
-                <p>The hidden `/refresh` page syncs every connected account in one go.</p>
-              </div>
-            </div>
-          </aside>
         </section>
       </div>
     </main>

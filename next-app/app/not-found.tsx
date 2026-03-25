@@ -68,8 +68,8 @@ export default function NotFound() {
 
             <div className="space-y-4">
               <p className="max-w-xl text-sm leading-7 text-muted-foreground">
-                The page you wanted is missing, but the challenge is still on. Head
-                back home, connect runners, or refresh the leaderboard.
+                The page you wanted is missing, but the challenge is still on.
+                Head back home to see the leaderboard.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -77,15 +77,6 @@ export default function NotFound() {
                   className={cn(buttonVariants({ size: "lg" }), "panel-shadow border border-foreground")}
                 >
                   Back home
-                </Link>
-                <Link
-                  href="/auth"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "panel-shadow border-foreground bg-background"
-                  )}
-                >
-                  Go to auth
                 </Link>
               </div>
             </div>
