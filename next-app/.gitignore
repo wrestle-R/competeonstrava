@@ -35,5 +35,8 @@ pnpm-debug.log*
 migrations
 
 # typescript
+
+.env.prod
+
 *.tsbuildinfo
 next-env.d.ts
