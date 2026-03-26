@@ -1,8 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache"
 
-import { saveRecordAction, unlockRecordAction } from "@/app/admin/actions"
+import { saveRecordAction } from "@/app/admin/actions"
 import { buttonVariants } from "@/lib/button-styles"
-import { formatDuration, getPublicPrBoard } from "@/lib/records"
+import { formatDuration, formatPacePerKm, getPublicPrBoard } from "@/lib/records"
 import { cn } from "@/lib/utils"
 
 function Field({
@@ -40,8 +40,9 @@ export default async function AdminRecordsPage() {
         </p>
         <h2 className="mt-2 text-2xl font-semibold">Manually update each runner&apos;s PRs</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-          Each distance belongs to a runner. Saving here locks only that runner&apos;s PR for
-          that distance, and Strava sync will stop overwriting it until you unlock it again.
+          Each distance belongs to a runner. Saving here updates that runner&apos;s PR directly.
+          Refresh now updates only leaderboard totals, so records are managed here on the
+          admin side.
         </p>
       </section>
 
@@ -71,10 +72,12 @@ export default async function AdminRecordsPage() {
                       <p className="mt-1 text-lg font-semibold">
                         {formatDuration(pr.recordSeconds)}
                       </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {formatPacePerKm(pr.recordSeconds, pr.distanceKm) ?? "Pace pending"}
+                      </p>
                     </div>
                     <p className="text-right text-sm text-muted-foreground">
-                      {pr.manualOverride ? "Locked" : "Auto"}
-                      {pr.source ? ` | ${pr.source}` : ""}
+                      {pr.source ?? "manual"}
                     </p>
                   </div>
 
@@ -92,16 +95,6 @@ export default async function AdminRecordsPage() {
                       Save manual PR
                     </button>
                   </form>
-
-                  {pr.manualOverride ? (
-                    <form action={unlockRecordAction} className="mt-3">
-                      <input type="hidden" name="participantId" value={participant.participantId} />
-                      <input type="hidden" name="distanceKey" value={pr.distanceKey} />
-                      <button type="submit" className={cn(buttonVariants({ variant: "outline" }))}>
-                        Unlock for Strava sync
-                      </button>
-                    </form>
-                  ) : null}
                 </div>
               ))}
             </div>

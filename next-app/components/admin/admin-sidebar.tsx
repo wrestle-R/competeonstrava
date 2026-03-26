@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { KeyRound, Trophy } from "lucide-react"
+import { KeyRound, RotateCcw, Trophy } from "lucide-react"
 
 import { BrandLogo } from "@/components/brand-logo"
 import { cn } from "@/lib/utils"
@@ -13,6 +13,7 @@ const navItems = [
     items: [
       { title: "Secrets", href: "/admin/secrets", icon: KeyRound },
       { title: "Records", href: "/admin/records", icon: Trophy },
+      { title: "Refresh", href: "/admin/refresh", icon: RotateCcw },
     ],
   },
 ]

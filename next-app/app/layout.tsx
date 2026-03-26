@@ -8,12 +8,9 @@ export const metadata: Metadata = {
   title: "Compete on Strava",
   description: "Robinsonites running leaderboard powered by Strava.",
   icons: {
-    icon: [
-      { url: "/runny-black-nobg.png", media: "(prefers-color-scheme: light)" },
-      { url: "/runny-white-nobg.png", media: "(prefers-color-scheme: dark)" },
-    ],
+    icon: ["/runny-white-nobg.png"],
     shortcut: ["/runny-white-nobg.png"],
-    apple: ["/runny-black-nobg.png"],
+    apple: ["/runny-white-nobg.png"],
   },
 }
 

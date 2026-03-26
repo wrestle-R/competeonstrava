@@ -2,6 +2,7 @@ import { dbQuery } from "@/lib/db"
 import { bootstrapParticipants, getParticipantRowsSafe } from "@/lib/participants"
 
 export const RECORD_DEFINITIONS = [
+  { key: "2mi", label: "3.2 km / 2 mile", distanceKm: 3.218688 },
   { key: "5k", label: "5 km", distanceKm: 5 },
   { key: "10k", label: "10 km", distanceKm: 10 },
   { key: "15k", label: "15 km", distanceKm: 15 },
@@ -48,6 +49,7 @@ type ParticipantPrRow = {
 }
 
 const RUSSEL_SEED_SECONDS: Record<RecordKey, number> = {
+  "2mi": 1007,
   "5k": 1590,
   "10k": 3367,
   "15k": 5401,
@@ -214,6 +216,18 @@ export function formatDuration(totalSeconds: number | null) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`
 }
 
+export function formatPacePerKm(totalSeconds: number | null, distanceKm: number) {
+  if (totalSeconds === null || distanceKm <= 0) {
+    return null
+  }
+
+  const paceSeconds = Math.round(totalSeconds / distanceKm)
+  const minutes = Math.floor(paceSeconds / 60)
+  const seconds = paceSeconds % 60
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}/km`
+}
+
 export function parseDurationToSeconds(value: string) {
   const trimmed = value.trim()
 
@@ -258,6 +272,17 @@ export function normalizeBestEffortRecordKey(bestEffort: {
 }) {
   const normalizedName = bestEffort.name?.toLowerCase().replace(/\s+/g, " ").trim() ?? ""
   const distance = bestEffort.distance ?? 0
+
+  if (
+    normalizedName.includes("2 mile") ||
+    normalizedName.includes("2-mile") ||
+    normalizedName.includes("two mile") ||
+    normalizedName.includes("3.2k") ||
+    normalizedName.includes("3.2 km") ||
+    withinMeters(distance, 3218.688, 200)
+  ) {
+    return "2mi"
+  }
 
   if (
     normalizedName.includes("5k") ||

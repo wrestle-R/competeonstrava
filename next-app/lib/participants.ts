@@ -53,6 +53,10 @@ export function getParticipantDefinition(slug: string) {
   return SUPPORTED_PARTICIPANTS.find((participant) => participant.slug === slug)
 }
 
+export function isSupportedParticipantSlug(slug: string) {
+  return Boolean(getParticipantDefinition(slug))
+}
+
 export function getParticipantEnvCredentials(slug: string) {
   const participant = getParticipantDefinition(slug)
 
@@ -230,6 +234,16 @@ export async function upsertParticipantSecret(input: {
   const tokenExpiresAt = parseTokenExpiresAt(input.tokenExpiresAtUnix)
 
   if (input.id) {
+    const existingParticipant = await getParticipantByIdSafe(input.id)
+
+    if (!existingParticipant) {
+      throw new Error("Participant not found.")
+    }
+
+    const nextSlug = isSupportedParticipantSlug(existingParticipant.slug)
+      ? existingParticipant.slug
+      : normalizedSlug
+
     await dbQuery(
       `
         UPDATE participants
@@ -245,7 +259,7 @@ export async function upsertParticipantSecret(input: {
       [
         input.id,
         input.name.trim(),
-        normalizedSlug,
+        nextSlug,
         input.clientId ?? "",
         input.clientSecret ?? "",
         tokenExpiresAt,
