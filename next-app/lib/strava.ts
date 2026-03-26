@@ -3,12 +3,10 @@ import type { PoolClient } from "pg"
 import { CHALLENGE_START_UNIX } from "@/lib/challenge"
 import { dbQuery, withDbClient } from "@/lib/db"
 import {
-  bootstrapParticipants,
   getParticipantRowsSafe,
   getParticipantByIdSafe,
   getParticipantBySlugSafe,
   getParticipantCredentials,
-  getParticipantDefinition,
   type ParticipantRecord,
 } from "@/lib/participants"
 
@@ -85,10 +83,8 @@ async function exchangeToken(payload: URLSearchParams): Promise<StravaTokenRespo
 }
 
 export async function exchangeCodeForParticipant(slug: string, code: string) {
-  await bootstrapParticipants()
-
+  const participant = await getParticipantBySlugSafe(slug)
   const credentials = await getParticipantCredentials(slug)
-  const participant = getParticipantDefinition(slug)
 
   if (!participant || !credentials?.ready) {
     throw new Error("Participant is not configured for Strava login.")
@@ -301,8 +297,6 @@ async function replaceParticipantActivities(
 }
 
 export async function syncParticipantBySlug(slug: string) {
-  await bootstrapParticipants()
-
   const participant = await getParticipantBySlugSafe(slug)
 
   if (!participant) {
@@ -353,7 +347,6 @@ export async function syncParticipantBySlug(slug: string) {
 }
 
 export async function syncAllParticipants() {
-  await bootstrapParticipants()
   const participants = await getParticipantRowsSafe()
 
   const results: Array<
@@ -369,7 +362,7 @@ export async function syncAllParticipants() {
         results.push({
           slug: participant.slug,
           status: "skipped",
-          reason: "Missing client credentials in environment variables.",
+          reason: "Missing client credentials in the database.",
         })
         continue
       }

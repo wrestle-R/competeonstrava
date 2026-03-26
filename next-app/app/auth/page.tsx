@@ -5,7 +5,6 @@ import { CircleCheckBig, CircleDashed, TriangleAlert } from "lucide-react"
 import { BrandLogo } from "@/components/brand-logo"
 import { buttonVariants } from "@/lib/button-styles"
 import {
-  bootstrapParticipants,
   type ParticipantRecord,
   getParticipantCredentials,
   getParticipantRowsSafe,
@@ -18,8 +17,6 @@ export default async function AuthPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   noStore()
-
-  await bootstrapParticipants()
 
   const params = await searchParams
   const status = typeof params.status === "string" ? params.status : null

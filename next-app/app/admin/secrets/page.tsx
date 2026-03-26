@@ -4,11 +4,7 @@ import { CircleCheckBig, CircleDashed } from "lucide-react"
 
 import { saveParticipantSecretAction } from "@/app/admin/actions"
 import { buttonVariants } from "@/lib/button-styles"
-import {
-  bootstrapParticipants,
-  getParticipantRowsSafe,
-  isSupportedParticipantSlug,
-} from "@/lib/participants"
+import { getParticipantRowsSafe } from "@/lib/participants"
 import { cn } from "@/lib/utils"
 
 function formatExpiry(date: Date | null) {
@@ -65,7 +61,6 @@ function Field({
 
 export default async function AdminSecretsPage() {
   noStore()
-  await bootstrapParticipants()
 
   const participants = await getParticipantRowsSafe()
 
@@ -87,7 +82,6 @@ export default async function AdminSecretsPage() {
         {participants.map((participant) => {
           const connected = Boolean(participant.refreshToken && participant.athleteId)
           const ready = Boolean(participant.clientId && participant.clientSecret)
-          const isSeededParticipant = isSupportedParticipantSlug(participant.slug)
 
           return (
             <form
@@ -125,7 +119,6 @@ export default async function AdminSecretsPage() {
                   label="Slug"
                   name="slug"
                   defaultValue={participant.slug}
-                  readOnly={isSeededParticipant}
                 />
                 <Field
                   label="Client ID"
@@ -178,12 +171,6 @@ export default async function AdminSecretsPage() {
                   className="border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-foreground"
                 />
               </label>
-
-              {isSeededParticipant ? (
-                <p className="text-xs text-muted-foreground">
-                  This runner slug is locked because the app bootstraps it automatically.
-                </p>
-              ) : null}
 
               <div className="flex flex-wrap gap-2">
                 <button type="submit" className={cn(buttonVariants())}>

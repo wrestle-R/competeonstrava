@@ -1,5 +1,5 @@
 import { dbQuery } from "@/lib/db"
-import { bootstrapParticipants, getParticipantRowsSafe } from "@/lib/participants"
+import { getParticipantRowsSafe } from "@/lib/participants"
 
 export const RECORD_DEFINITIONS = [
   { key: "2mi", label: "3.2 km / 2 mile", distanceKm: 3.218688 },
@@ -48,14 +48,6 @@ type ParticipantPrRow = {
   updated_at: Date
 }
 
-const RUSSEL_SEED_SECONDS: Record<RecordKey, number> = {
-  "2mi": 1007,
-  "5k": 1590,
-  "10k": 3367,
-  "15k": 5401,
-  "21k": 7761,
-}
-
 export async function canUseParticipantPrsTable() {
   try {
     const { rows } = await dbQuery<{ regclass: string | null }>(
@@ -73,14 +65,10 @@ export async function bootstrapParticipantPrs() {
     return
   }
 
-  await bootstrapParticipants()
   const participants = await getParticipantRowsSafe()
 
   for (const participant of participants) {
     for (const record of RECORD_DEFINITIONS) {
-      const seededSeconds =
-        participant.slug === "russel" ? RUSSEL_SEED_SECONDS[record.key] : null
-
       await dbQuery(
         `
           INSERT INTO participant_prs (
@@ -100,8 +88,8 @@ export async function bootstrapParticipantPrs() {
           record.key,
           record.distanceKm,
           record.label,
-          seededSeconds,
-          seededSeconds ? "seed" : null,
+          null,
+          null,
         ]
       )
     }

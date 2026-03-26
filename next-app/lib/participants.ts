@@ -1,11 +1,5 @@
 import { dbQuery } from "@/lib/db"
 
-export type SupportedParticipant = {
-  slug: "russel" | "joel" | "joab" | "joe-israel"
-  name: string
-  envPrefix: "RUSSEL" | "JOEL" | "JOAB" | "JOELISRAEL"
-}
-
 export type ParticipantRecord = {
   id: number
   name: string
@@ -42,92 +36,10 @@ type ParticipantRow = {
   updated_at: Date
 }
 
-export const SUPPORTED_PARTICIPANTS: SupportedParticipant[] = [
-  { slug: "russel", name: "Russel Daniel Paul", envPrefix: "RUSSEL" },
-  { slug: "joel", name: "Joel", envPrefix: "JOEL" },
-  { slug: "joab", name: "Joab", envPrefix: "JOAB" },
-  { slug: "joe-israel", name: "Joe Israel", envPrefix: "JOELISRAEL" },
-]
-
-export function getParticipantDefinition(slug: string) {
-  return SUPPORTED_PARTICIPANTS.find((participant) => participant.slug === slug)
-}
-
-export function isSupportedParticipantSlug(slug: string) {
-  return Boolean(getParticipantDefinition(slug))
-}
-
-export function getParticipantEnvCredentials(slug: string) {
-  const participant = getParticipantDefinition(slug)
-
-  if (!participant) {
-    return null
-  }
-
-  const clientId = process.env[`${participant.envPrefix}_CLIENT_ID`]
-  const clientSecret = process.env[`${participant.envPrefix}_CLIENT_SECRET`]
-  const accessToken = process.env[`${participant.envPrefix}_ACCESS_TOKEN`]
-  const refreshToken = process.env[`${participant.envPrefix}_REFRESH_TOKEN`]
-  const tokenExpiresAt = process.env[`${participant.envPrefix}_TOKEN_EXPIRES_AT`]
-
-  return {
-    ...participant,
-    clientId: clientId ?? null,
-    clientSecret: clientSecret ?? null,
-    accessToken: accessToken ?? null,
-    refreshToken: refreshToken ?? null,
-    tokenExpiresAt: tokenExpiresAt ? new Date(Number(tokenExpiresAt) * 1000) : null,
-    ready: Boolean(clientId && clientSecret),
-  }
-}
-
-export async function bootstrapParticipants() {
-  if (!(await canUseParticipantsTable())) {
-    return
-  }
-
-  for (const participant of SUPPORTED_PARTICIPANTS) {
-    const credentials = getParticipantEnvCredentials(participant.slug)
-
-    await dbQuery(
-      `
-        INSERT INTO participants (
-          name,
-          slug,
-          client_id,
-          client_secret,
-          access_token,
-          refresh_token,
-          token_expires_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (slug) DO UPDATE SET
-          name = EXCLUDED.name,
-          client_id = COALESCE(EXCLUDED.client_id, participants.client_id),
-          client_secret = COALESCE(EXCLUDED.client_secret, participants.client_secret),
-          access_token = COALESCE(participants.access_token, EXCLUDED.access_token),
-          refresh_token = COALESCE(participants.refresh_token, EXCLUDED.refresh_token),
-          token_expires_at = COALESCE(participants.token_expires_at, EXCLUDED.token_expires_at)
-      `,
-      [
-        participant.name,
-        participant.slug,
-        credentials?.clientId ?? null,
-        credentials?.clientSecret ?? null,
-        credentials?.accessToken ?? null,
-        credentials?.refreshToken ?? null,
-        credentials?.tokenExpiresAt ?? null,
-      ]
-    )
-  }
-}
-
 export async function getLeaderboardParticipants() {
   if (!(await canUseParticipantsTable())) {
     return []
   }
-
-  await bootstrapParticipants()
 
   const { rows } = await dbQuery<ParticipantRow>(
     `
@@ -146,8 +58,6 @@ export async function getParticipantRowsSafe(): Promise<ParticipantRecord[]> {
   if (!(await canUseParticipantsTable())) {
     return []
   }
-
-  await bootstrapParticipants()
 
   const { rows } = await dbQuery<ParticipantRow>(
     `
@@ -191,24 +101,18 @@ export async function getParticipantByIdSafe(
 }
 
 export async function getParticipantCredentials(slug: string) {
-  await bootstrapParticipants()
-
   const participant = await getParticipantBySlugSafe(slug)
-  const envCredentials = getParticipantEnvCredentials(slug)
 
-  const clientId = participant?.clientId ?? envCredentials?.clientId ?? null
-  const clientSecret = participant?.clientSecret ?? envCredentials?.clientSecret ?? null
-
-  if (!participant && !envCredentials) {
+  if (!participant) {
     return null
   }
 
   return {
-    slug: participant?.slug ?? envCredentials?.slug ?? slug,
-    name: participant?.name ?? envCredentials?.name ?? slug,
-    clientId,
-    clientSecret,
-    ready: Boolean(clientId && clientSecret),
+    slug: participant.slug,
+    name: participant.name,
+    clientId: participant.clientId,
+    clientSecret: participant.clientSecret,
+    ready: Boolean(participant.clientId && participant.clientSecret),
   }
 }
 
@@ -226,9 +130,14 @@ export async function upsertParticipantSecret(input: {
   }
 
   const normalizedSlug = slugify(input.slug || input.name)
+  const trimmedName = input.name.trim()
 
   if (!normalizedSlug) {
     throw new Error("A valid slug is required.")
+  }
+
+  if (!trimmedName) {
+    throw new Error("Name is required.")
   }
 
   const tokenExpiresAt = parseTokenExpiresAt(input.tokenExpiresAtUnix)
@@ -239,10 +148,6 @@ export async function upsertParticipantSecret(input: {
     if (!existingParticipant) {
       throw new Error("Participant not found.")
     }
-
-    const nextSlug = isSupportedParticipantSlug(existingParticipant.slug)
-      ? existingParticipant.slug
-      : normalizedSlug
 
     await dbQuery(
       `
@@ -258,8 +163,8 @@ export async function upsertParticipantSecret(input: {
       `,
       [
         input.id,
-        input.name.trim(),
-        nextSlug,
+        trimmedName,
+        normalizedSlug,
         input.clientId ?? "",
         input.clientSecret ?? "",
         tokenExpiresAt,
@@ -290,7 +195,7 @@ export async function upsertParticipantSecret(input: {
         updated_at = NOW()
     `,
     [
-      input.name.trim(),
+      trimmedName,
       normalizedSlug,
       input.clientId ?? "",
       input.clientSecret ?? "",
