@@ -2,14 +2,15 @@ import type { PoolClient } from "pg"
 
 import { CHALLENGE_START_UNIX } from "@/lib/challenge"
 import { dbQuery, withDbClient } from "@/lib/db"
+import { normalizeBestEffortRecordKey, syncParticipantPrCandidate } from "@/lib/records"
 import {
   bootstrapParticipants,
+  getParticipantRowsSafe,
   getParticipantByIdSafe,
   getParticipantBySlugSafe,
   getParticipantCredentials,
   getParticipantDefinition,
   type ParticipantRecord,
-  SUPPORTED_PARTICIPANTS,
 } from "@/lib/participants"
 
 type StravaTokenResponse = {
@@ -33,6 +34,14 @@ type StravaActivity = {
   elapsed_time?: number
   start_date?: string
   start_date_local?: string
+}
+
+type StravaActivityDetail = StravaActivity & {
+  best_efforts?: Array<{
+    name?: string
+    elapsed_time?: number
+    distance?: number
+  }>
 }
 
 export function getBaseUrl() {
@@ -87,7 +96,7 @@ async function exchangeToken(payload: URLSearchParams): Promise<StravaTokenRespo
 export async function exchangeCodeForParticipant(slug: string, code: string) {
   await bootstrapParticipants()
 
-  const credentials = getParticipantCredentials(slug)
+  const credentials = await getParticipantCredentials(slug)
   const participant = getParticipantDefinition(slug)
 
   if (!participant || !credentials?.ready) {
@@ -235,6 +244,55 @@ async function fetchChallengeActivities(accessToken: string) {
   return runActivities
 }
 
+async function fetchAllRunActivities(accessToken: string) {
+  let page = 1
+  const runActivities: StravaActivity[] = []
+
+  while (true) {
+    const url = new URL("https://www.strava.com/api/v3/athlete/activities")
+    url.searchParams.set("per_page", "100")
+    url.searchParams.set("page", String(page))
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      const details = await response.text()
+      throw new Error(`Failed to fetch activities: ${response.status} ${details}`)
+    }
+
+    const activities = (await response.json()) as StravaActivity[]
+    runActivities.push(...activities.filter(isRunActivity))
+
+    if (activities.length < 100 || page >= 20) {
+      break
+    }
+
+    page += 1
+  }
+
+  return runActivities
+}
+
+async function fetchActivityDetail(accessToken: string, activityId: number) {
+  const response = await fetch(
+    `https://www.strava.com/api/v3/activities/${activityId}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    }
+  )
+
+  if (!response.ok) {
+    const details = await response.text()
+    throw new Error(`Failed to fetch activity detail: ${response.status} ${details}`)
+  }
+
+  return (await response.json()) as StravaActivityDetail
+}
+
 async function replaceParticipantActivities(
   client: PoolClient,
   participant: ParticipantRecord,
@@ -300,6 +358,35 @@ async function replaceParticipantActivities(
   )
 }
 
+async function syncParticipantRecordsFromStrava(participant: ParticipantRecord) {
+  if (!participant.accessToken) {
+    return
+  }
+
+  const allRunActivities = await fetchAllRunActivities(participant.accessToken)
+  const candidateActivities = allRunActivities.filter((activity) => activity.distance >= 5000)
+
+  for (const activity of candidateActivities) {
+    const detail = await fetchActivityDetail(participant.accessToken, activity.id)
+
+    for (const bestEffort of detail.best_efforts ?? []) {
+      const distanceKey = normalizeBestEffortRecordKey(bestEffort)
+      const elapsedSeconds = bestEffort.elapsed_time ?? 0
+
+      if (!distanceKey || elapsedSeconds <= 0) {
+        continue
+      }
+
+      await syncParticipantPrCandidate({
+        participantId: participant.id,
+        distanceKey,
+        recordSeconds: elapsedSeconds,
+        activityId: String(activity.id),
+      })
+    }
+  }
+}
+
 export async function syncParticipantBySlug(slug: string) {
   await bootstrapParticipants()
 
@@ -342,6 +429,8 @@ export async function syncParticipantBySlug(slug: string) {
     await replaceParticipantActivities(client, readyParticipant, activities, totalKm)
   })
 
+  await syncParticipantRecordsFromStrava(readyParticipant)
+
   const updated = await getParticipantByIdSafe(participant.id)
 
   return {
@@ -354,15 +443,16 @@ export async function syncParticipantBySlug(slug: string) {
 
 export async function syncAllParticipants() {
   await bootstrapParticipants()
+  const participants = await getParticipantRowsSafe()
 
   const results: Array<
     | { slug: string; status: "synced"; totalKm: number; athleteName: string }
     | { slug: string; status: "skipped" | "error"; reason: string }
   > = []
 
-  for (const participant of SUPPORTED_PARTICIPANTS) {
+  for (const participant of participants) {
     try {
-      const credentials = getParticipantCredentials(participant.slug)
+      const credentials = await getParticipantCredentials(participant.slug)
 
       if (!credentials?.ready) {
         results.push({

@@ -1,15 +1,14 @@
-import Image from "next/image"
 import Link from "next/link"
 import { unstable_noStore as noStore } from "next/cache"
 import { CircleCheckBig, CircleDashed, TriangleAlert } from "lucide-react"
 
+import { BrandLogo } from "@/components/brand-logo"
 import { buttonVariants } from "@/lib/button-styles"
 import {
   bootstrapParticipants,
   type ParticipantRecord,
   getParticipantCredentials,
   getParticipantRowsSafe,
-  SUPPORTED_PARTICIPANTS,
 } from "@/lib/participants"
 import { cn } from "@/lib/utils"
 
@@ -28,38 +27,33 @@ export default async function AuthPage({
   const message = typeof params.message === "string" ? params.message : null
 
   const rows = await getParticipantRowsSafe()
-
-  const participantMap = new Map<string, ParticipantRecord>(
-    rows.map((row: ParticipantRecord) => [row.slug, row])
+  const participants = await Promise.all(
+    rows.map(async (row: ParticipantRecord) => ({
+      row,
+      credentials: await getParticipantCredentials(row.slug),
+    }))
   )
 
   return (
-    <main className="noise-overlay min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+    <main className="noise-overlay min-h-screen px-3 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <section className="panel-shadow border border-border bg-card p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-4">
-            <Image
-              src="/logo.png"
-              alt="Compete on Strava logo"
-              width={80}
-              height={55}
-              className="h-auto w-20"
-              priority
-            />
+            <BrandLogo className="h-16 w-16 sm:h-20 sm:w-20" priority />
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+              <p className="text-[10px] uppercase tracking-[0.35em] text-muted-foreground sm:text-xs">
                 Robinsonites connect desk
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
+              <h1 className="mt-1 text-2xl font-semibold text-foreground sm:mt-2 sm:text-4xl">
                 One-time Strava auth
               </h1>
             </div>
           </div>
 
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground">
+          <p className="mt-4 max-w-2xl text-[13px] leading-relaxed text-muted-foreground sm:mt-5 sm:text-sm sm:leading-7">
             Connect each runner once, then the home page can read cached totals
-            from Postgres. This hidden desk is configured for the four active
-            Robinsonites runners: Russel, Joel, Joab, and Joe Israel.
+            from Postgres. This hidden desk reads whoever has been added to the
+            runner list and lets each runner finish their Strava auth once.
           </p>
 
           {status ? (
@@ -79,17 +73,14 @@ export default async function AuthPage({
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          {SUPPORTED_PARTICIPANTS.map((participant) => {
-            const credentials = getParticipantCredentials(participant.slug)
-            const row = participantMap.get(participant.slug)
+          {participants.map(({ row, credentials }) => {
             const connected = Boolean(row?.refreshToken && row?.athleteId)
             const awaitingRealConnect = Boolean(row?.refreshToken && !row?.athleteId)
             const missingConfig = !credentials?.ready
-            const envPrefix = credentials?.envPrefix ?? participant.envPrefix
 
             return (
               <article
-                key={participant.slug}
+                key={row.slug}
                 className={cn(
                   "panel-shadow border p-5 transition-colors",
                   connected
@@ -99,11 +90,11 @@ export default async function AuthPage({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-                      {participant.slug}
+                    <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground sm:text-xs">
+                      {row.slug}
                     </p>
-                    <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                      {participant.name}
+                    <h2 className="mt-1 text-xl font-semibold text-foreground sm:mt-2 sm:text-2xl">
+                      {row.name}
                     </h2>
                   </div>
                   {connected ? (
@@ -124,7 +115,7 @@ export default async function AuthPage({
                         : awaitingRealConnect
                           ? "Needs first connect"
                         : missingConfig
-                          ? "Missing env credentials"
+                          ? "Missing secrets"
                           : "Ready to connect"}
                     </span>
                   </p>
@@ -132,7 +123,7 @@ export default async function AuthPage({
                     Athlete:{" "}
                     <span className="font-medium text-foreground">
                       {connected
-                        ? (row?.athleteName ?? participant.name)
+                        ? (row?.athleteName ?? row.name)
                         : "Not linked yet"}
                     </span>
                   </p>
@@ -148,13 +139,13 @@ export default async function AuthPage({
 
                 {missingConfig ? (
                   <p className="mt-5 border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground">
-                    Add `{envPrefix}_CLIENT_ID` and `{envPrefix}_CLIENT_SECRET`
-                    before using this login button.
+                    Add this runner&apos;s client ID and client secret first before
+                    using this login button.
                   </p>
                 ) : (
                   <div className="mt-5 flex flex-wrap gap-3">
                     <a
-                      href={`/api/strava/start?user=${participant.slug}`}
+                      href={`/api/strava/start?user=${row.slug}`}
                       className={cn(
                         buttonVariants({ size: "lg" }),
                         "hero-glow border border-foreground text-primary-foreground"

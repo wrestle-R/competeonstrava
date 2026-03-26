@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?status=error&message=Missing%20user", request.url))
   }
 
-  const participant = getParticipantCredentials(user)
+  const participant = await getParticipantCredentials(user)
 
   if (!participant?.ready) {
     return NextResponse.redirect(

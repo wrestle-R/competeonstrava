@@ -39,9 +39,9 @@ export default async function RefreshPage({
           </div>
 
           <p className="mt-5 max-w-2xl text-sm leading-7 text-muted-foreground">
-            This page pulls every connected Robinsonites account from Strava,
-            updates cached totals in Postgres, and keeps the home page focused on
-            the cached leaderboard for the current four-runner lineup.
+            This page pulls every connected runner from Strava, updates cached
+            totals in Postgres, and also refreshes each runner&apos;s PR entries for
+            `5k`, `10k`, `15k`, and `21k` unless that exact PR was manually locked.
           </p>
 
           {status ? (

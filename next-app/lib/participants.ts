@@ -19,6 +19,7 @@ export type ParticipantRecord = {
   tokenExpiresAt: Date | null
   totalKm: number
   lastSyncedAt: Date | null
+  notes: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -36,6 +37,7 @@ type ParticipantRow = {
   token_expires_at: Date | null
   total_km: number | string
   last_synced_at: Date | null
+  notes: string | null
   created_at: Date
   updated_at: Date
 }
@@ -51,7 +53,7 @@ export function getParticipantDefinition(slug: string) {
   return SUPPORTED_PARTICIPANTS.find((participant) => participant.slug === slug)
 }
 
-export function getParticipantCredentials(slug: string) {
+export function getParticipantEnvCredentials(slug: string) {
   const participant = getParticipantDefinition(slug)
 
   if (!participant) {
@@ -81,11 +83,7 @@ export async function bootstrapParticipants() {
   }
 
   for (const participant of SUPPORTED_PARTICIPANTS) {
-    const credentials = getParticipantCredentials(participant.slug)
-
-    if (!credentials?.ready) {
-      continue
-    }
+    const credentials = getParticipantEnvCredentials(participant.slug)
 
     await dbQuery(
       `
@@ -93,19 +91,28 @@ export async function bootstrapParticipants() {
           name,
           slug,
           client_id,
-          client_secret
+          client_secret,
+          access_token,
+          refresh_token,
+          token_expires_at
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
-          client_id = EXCLUDED.client_id,
-          client_secret = EXCLUDED.client_secret
+          client_id = COALESCE(EXCLUDED.client_id, participants.client_id),
+          client_secret = COALESCE(EXCLUDED.client_secret, participants.client_secret),
+          access_token = COALESCE(participants.access_token, EXCLUDED.access_token),
+          refresh_token = COALESCE(participants.refresh_token, EXCLUDED.refresh_token),
+          token_expires_at = COALESCE(participants.token_expires_at, EXCLUDED.token_expires_at)
       `,
       [
         participant.name,
         participant.slug,
-        credentials.clientId,
-        credentials.clientSecret,
+        credentials?.clientId ?? null,
+        credentials?.clientSecret ?? null,
+        credentials?.accessToken ?? null,
+        credentials?.refreshToken ?? null,
+        credentials?.tokenExpiresAt ?? null,
       ]
     )
   }
@@ -122,12 +129,10 @@ export async function getLeaderboardParticipants() {
     `
       SELECT *
       FROM participants
-      WHERE slug = ANY($1::text[])
-        AND refresh_token IS NOT NULL
+      WHERE refresh_token IS NOT NULL
         AND athlete_id IS NOT NULL
       ORDER BY total_km DESC, name ASC
-    `,
-    [SUPPORTED_PARTICIPANTS.map((participant) => participant.slug)]
+    `
   )
 
   return rows.map(mapParticipant)
@@ -138,14 +143,14 @@ export async function getParticipantRowsSafe(): Promise<ParticipantRecord[]> {
     return []
   }
 
+  await bootstrapParticipants()
+
   const { rows } = await dbQuery<ParticipantRow>(
     `
       SELECT *
       FROM participants
-      WHERE slug = ANY($1::text[])
       ORDER BY name ASC
-    `,
-    [SUPPORTED_PARTICIPANTS.map((participant) => participant.slug)]
+    `
   )
 
   return rows.map(mapParticipant)
@@ -181,6 +186,106 @@ export async function getParticipantByIdSafe(
   return rows[0] ? mapParticipant(rows[0]) : null
 }
 
+export async function getParticipantCredentials(slug: string) {
+  await bootstrapParticipants()
+
+  const participant = await getParticipantBySlugSafe(slug)
+  const envCredentials = getParticipantEnvCredentials(slug)
+
+  const clientId = participant?.clientId ?? envCredentials?.clientId ?? null
+  const clientSecret = participant?.clientSecret ?? envCredentials?.clientSecret ?? null
+
+  if (!participant && !envCredentials) {
+    return null
+  }
+
+  return {
+    slug: participant?.slug ?? envCredentials?.slug ?? slug,
+    name: participant?.name ?? envCredentials?.name ?? slug,
+    clientId,
+    clientSecret,
+    ready: Boolean(clientId && clientSecret),
+  }
+}
+
+export async function upsertParticipantSecret(input: {
+  id?: number | null
+  name: string
+  slug: string
+  clientId?: string | null
+  clientSecret?: string | null
+  tokenExpiresAtUnix?: string | null
+  notes?: string | null
+}) {
+  if (!(await canUseParticipantsTable())) {
+    throw new Error("Participants table is not available yet.")
+  }
+
+  const normalizedSlug = slugify(input.slug || input.name)
+
+  if (!normalizedSlug) {
+    throw new Error("A valid slug is required.")
+  }
+
+  const tokenExpiresAt = parseTokenExpiresAt(input.tokenExpiresAtUnix)
+
+  if (input.id) {
+    await dbQuery(
+      `
+        UPDATE participants
+        SET name = $2,
+            slug = $3,
+            client_id = NULLIF($4, ''),
+            client_secret = NULLIF($5, ''),
+            token_expires_at = $6,
+            notes = NULLIF($7, ''),
+            updated_at = NOW()
+        WHERE id = $1
+      `,
+      [
+        input.id,
+        input.name.trim(),
+        normalizedSlug,
+        input.clientId ?? "",
+        input.clientSecret ?? "",
+        tokenExpiresAt,
+        input.notes ?? "",
+      ]
+    )
+
+    return
+  }
+
+  await dbQuery(
+    `
+      INSERT INTO participants (
+        name,
+        slug,
+        client_id,
+        client_secret,
+        token_expires_at,
+        notes
+      )
+      VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), $5, NULLIF($6, ''))
+      ON CONFLICT (slug) DO UPDATE SET
+        name = EXCLUDED.name,
+        client_id = COALESCE(EXCLUDED.client_id, participants.client_id),
+        client_secret = COALESCE(EXCLUDED.client_secret, participants.client_secret),
+        token_expires_at = COALESCE(EXCLUDED.token_expires_at, participants.token_expires_at),
+        notes = COALESCE(EXCLUDED.notes, participants.notes),
+        updated_at = NOW()
+    `,
+    [
+      input.name.trim(),
+      normalizedSlug,
+      input.clientId ?? "",
+      input.clientSecret ?? "",
+      tokenExpiresAt,
+      input.notes ?? "",
+    ]
+  )
+}
+
 export async function canUseParticipantsTable() {
   try {
     const { rows } = await dbQuery<{ regclass: string | null }>(
@@ -190,6 +295,30 @@ export async function canUseParticipantsTable() {
   } catch {
     return false
   }
+}
+
+export function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
+function parseTokenExpiresAt(value?: string | null) {
+  const trimmed = value?.trim()
+
+  if (!trimmed) {
+    return null
+  }
+
+  const seconds = Number(trimmed)
+
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error("Token expiry must be a valid Unix timestamp in seconds.")
+  }
+
+  return new Date(seconds * 1000)
 }
 
 function mapParticipant(row: ParticipantRow): ParticipantRecord {
@@ -206,6 +335,7 @@ function mapParticipant(row: ParticipantRow): ParticipantRecord {
     tokenExpiresAt: row.token_expires_at,
     totalKm: Number(row.total_km ?? 0),
     lastSyncedAt: row.last_synced_at,
+    notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

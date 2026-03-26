@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 
-import Image from "next/image"
 import { unstable_noStore as noStore } from "next/cache"
 import { Footprints, Flame, TimerReset, Trophy } from "lucide-react"
 
+import { BrandLogo } from "@/components/brand-logo"
 import { buttonVariants } from "@/lib/button-styles"
 import {
   CHALLENGE_END,
@@ -33,39 +33,32 @@ export default async function Page() {
 
   return (
     <main className="noise-overlay min-h-screen">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <section className="panel-shadow overflow-hidden border border-border bg-card">
           <div className="grid gap-0 lg:grid-cols-[1.3fr_0.7fr]">
-            <div className="flex flex-col justify-between gap-6 border-b border-border p-5 sm:p-6 lg:border-r lg:border-b-0 lg:p-8">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="hero-glow panel-shadow flex items-center gap-4 border border-foreground px-5 py-4">
-                  <Image
-                    src="/logo.png"
-                    alt="Compete on Strava logo"
-                    width={54}
-                    height={37}
-                    className="h-auto w-[54px]"
-                    priority
-                  />
+            <div className="flex flex-col justify-between gap-5 border-b border-border p-4 sm:p-6 lg:border-r lg:border-b-0 lg:p-8">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="hero-glow panel-shadow flex items-center gap-3 border border-foreground px-3 py-3 sm:px-5 sm:py-4">
+                  <BrandLogo className="h-[42px] w-[42px] sm:h-[54px] sm:w-[54px]" priority />
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.35em] text-primary-foreground/80">
                       Compete on Strava
                     </p>
-                    <h1 className="mt-1 text-2xl font-semibold leading-none text-primary-foreground sm:text-4xl">
+                    <h1 className="mt-1 text-xl font-semibold leading-none text-primary-foreground sm:text-4xl">
                       Robinsonites
                     </h1>
                   </div>
                 </div>
-                <div className="border border-border bg-background px-3 py-2 text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+                <div className="border border-border bg-background px-2.5 py-1.5 text-[10px] uppercase tracking-[0.22em] text-muted-foreground sm:px-3 sm:py-2 sm:text-[11px]">
                   {CHALLENGE_NAME}
                 </div>
               </div>
 
               <div className="max-w-2xl space-y-3">
-                <h2 className="max-w-2xl text-3xl font-semibold leading-none text-foreground sm:text-5xl">
+                <h2 className="max-w-2xl text-2xl font-semibold leading-none text-foreground sm:text-5xl">
                   If it&apos;s not on Strava, it did not HAPPEN
                 </h2>
-                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                <p className="max-w-xl text-[13px] leading-relaxed text-muted-foreground sm:text-base">
                   A highly competitive leaderboard for the Robinsonites crew to prove 
                   who is actually running, from{" "}
                   <span className="font-medium text-foreground">
@@ -84,9 +77,14 @@ export default async function Page() {
                   </span>
                   .
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Currently featuring the athletic (and perhaps not-so-athletic) attempts of Russel, Joel, Joab, and Joe Israel.
+                <p className="text-[13px] text-muted-foreground sm:text-sm">
+                  Currently featuring the athletic and not-so-athletic attempts of the Robinsonites crew.
                 </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <a href="/records" className={cn(buttonVariants({ variant: "default", size: "default" }), "w-full sm:w-auto shadow-sm")}>
+                    <Trophy className="mr-2 size-4" /> View Leaderboard Records
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -120,13 +118,10 @@ export default async function Page() {
         </section>
 
         <section className="mt-6">
-          <div className="panel-shadow border border-border bg-card p-4 sm:p-6">
+          <div className="panel-shadow border border-border bg-card p-3.5 sm:p-6">
             <div className="mb-5 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                  Live from Postgres cache
-                </p>
-                <h3 className="mt-2 text-2xl font-semibold text-foreground">
+                <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
                   Leaderboard
                 </h3>
               </div>
@@ -146,7 +141,7 @@ export default async function Page() {
                   return (
                     <article
                       key={participant.id}
-                      className="border border-border bg-background p-4 sm:p-5"
+                      className="border border-border bg-background p-3.5 sm:p-5"
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div className="space-y-2">
@@ -154,7 +149,7 @@ export default async function Page() {
                             #{String(index + 1).padStart(2, "0")}
                           </p>
                           <div>
-                            <h4 className="text-2xl font-semibold text-foreground">
+                            <h4 className="text-xl font-semibold text-foreground sm:text-2xl">
                               {participant.athleteName ?? participant.name}
                             </h4>
                             <p className="text-sm text-muted-foreground">
@@ -173,7 +168,7 @@ export default async function Page() {
                           <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
                             Distance
                           </p>
-                          <p className="text-3xl font-semibold text-foreground">
+                          <p className="text-2xl font-semibold text-foreground sm:text-3xl">
                             {formatKm(participant.totalKm)}
                           </p>
                         </div>
@@ -200,7 +195,7 @@ export default async function Page() {
                 <p className="text-xs uppercase tracking-[0.35em] text-primary-foreground/75">
                   No runners connected yet
                 </p>
-                <h4 className="mt-3 text-3xl font-semibold">
+                <h4 className="mt-3 text-2xl font-semibold sm:text-3xl">
                   The board is ready whenever the Robinsonites data lands.
                 </h4>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-primary-foreground/85">
