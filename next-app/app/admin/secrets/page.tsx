@@ -30,18 +30,30 @@ function formatExpiryUnix(date: Date | null) {
   return String(Math.floor(date.getTime() / 1000))
 }
 
+function formatExpiryUnixInput(date: Date | null) {
+  if (!date) {
+    return ""
+  }
+
+  return String(Math.floor(date.getTime() / 1000))
+}
+
 function Field({
   label,
   name,
   defaultValue,
   placeholder,
   readOnly = false,
+  type = "text",
+  inputMode,
 }: {
   label: string
   name: string
   defaultValue?: string | null
   placeholder?: string
   readOnly?: boolean
+  type?: React.HTMLInputTypeAttribute
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"]
 }) {
   return (
     <label className="grid gap-2">
@@ -53,6 +65,8 @@ function Field({
         defaultValue={defaultValue ?? ""}
         placeholder={placeholder}
         readOnly={readOnly}
+        type={type}
+        inputMode={inputMode}
         className="h-10 border border-border bg-background px-3 text-sm outline-none transition focus:border-foreground"
       />
     </label>
@@ -135,8 +149,10 @@ export default async function AdminSecretsPage() {
                 <Field
                   label="Token expiry unix"
                   name="tokenExpiresAtUnix"
-                  defaultValue={formatExpiryUnix(participant.tokenExpiresAt)}
+                  defaultValue={formatExpiryUnixInput(participant.tokenExpiresAt)}
                   placeholder="1774459496"
+                  type="number"
+                  inputMode="numeric"
                 />
               </div>
 
@@ -209,6 +225,8 @@ export default async function AdminSecretsPage() {
               label="Token expiry unix"
               name="tokenExpiresAtUnix"
               placeholder="1774459496"
+              type="number"
+              inputMode="numeric"
             />
           </div>
 
